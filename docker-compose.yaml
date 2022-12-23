@@ -1,0 +1,55 @@
+services:
+  db:
+    image: mysql
+    restart: always
+    secrets:
+      - db-password
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      - backnet
+    environment:
+      - MYSQL_DATABASE=example
+      - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/db-password
+    expose:
+       - 3306
+       - 33060
+
+  nginx:
+    build: nginx
+    restart: always
+    ports:
+      - 8080:8080
+    depends_on:
+      - app
+    networks:
+      - frontnet
+    volumes:
+      - /home/alok/projectCloud/nginx/shared:/shared
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 50M
+
+  app:
+    build: ping-pong-app
+    restart: always
+    ports:
+      - 80:80
+    networks:
+      - backnet
+      - frontnet
+    depends_on:
+      - db
+
+volumes:
+  db-data:
+
+secrets:
+  db-password:
+    file: db/password.txt
+
+networks:
+  backnet:
+  frontnet:
